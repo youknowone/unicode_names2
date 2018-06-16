@@ -1,12 +1,13 @@
 [package]
 
-name = "unicode_names"
+name = "unicode_names2"
 version = "0.1.7"
 authors = ["Huon Wilson <dbau.pp@gmail.com>",
-           "Kang Seonghoon <public+rust@mearie.org>"]
+           "Kang Seonghoon <public+rust@mearie.org>",
+           "Valentin Lorentz <progval+git@progval.net>",]
 
-homepage = "https://github.com/huonw/unicode_names"
-repository = "https://github.com/huonw/unicode_names"
+homepage = "https://github.com/ProgVal/unicode_names2"
+repository = "https://github.com/ProgVal/unicode_names2"
 documentation = "http://huonw.github.io/unicode_names/unicode_names/"
 license = "MIT/Apache-2.0"
 keywords = ["text", "unicode"]
@@ -30,8 +31,8 @@ default = []
 unstable = []
 no_std = []
 
-[dev-dependencies.unicode_names_macros]
-path = "unicode_names_macros"
+[dev-dependencies.unicode_names2_macros]
+path = "unicode_names2_macros"
 version = "*"
 
 [dev-dependencies]

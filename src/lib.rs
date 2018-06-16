@@ -9,20 +9,20 @@
 //! name)`).
 //!
 //! ```rust
-//! extern crate unicode_names;
+//! extern crate unicode_names2;
 //!
 //! fn main() {
-//!     println!("☃ is called {:?}", unicode_names::name('☃')); // SNOWMAN
-//!     println!("{:?} is happy", unicode_names::character("white smiling face")); // ☺
+//!     println!("☃ is called {:?}", unicode_names2::name('☃')); // SNOWMAN
+//!     println!("{:?} is happy", unicode_names2::character("white smiling face")); // ☺
 //!     // (NB. case insensitivity)
 //! }
 //! ```
 //!
-//! [**Source**](https://github.com/huonw/unicode_names).
+//! [**Source**](https://github.com/huonw/unicode_names2).
 //!
 //! # Macros
 //!
-//! The associated `unicode_names_macros` crate provides two macros
+//! The associated `unicode_names2_macros` crate provides two macros
 //! for converting at compile-time, giving named literals similar to
 //! Python's `"\N{...}"`.
 //!
@@ -35,8 +35,8 @@
 //!
 //! ```rust
 //! #![feature(plugin)]
-//! #![plugin(unicode_names_macros)]
-//! # extern crate unicode_names; // pointless, just avoid extern crate being inserted
+//! #![plugin(unicode_names2_macros)]
+//! # extern crate unicode_names2; // pointless, just avoid extern crate being inserted
 //!
 //! fn main() {
 //!     let x: char = named_char!("snowman");
@@ -54,8 +54,8 @@
 //!
 //! ```toml
 //! [dependencies]
-//! unicode_names = "0.1"
-//! unicode_names_macros = "0.1"
+//! unicode_names2 = "0.1"
+//! unicode_names2_macros = "0.1"
 //! ```
 
 #![cfg_attr(feature = "no_std", feature(no_std, core))]
@@ -219,17 +219,17 @@ impl fmt::Display for Name {
 ///
 /// ```rust
 /// # #![allow(unstable)]
-/// assert_eq!(unicode_names::name('a').map(|n| n.to_string()),
+/// assert_eq!(unicode_names2::name('a').map(|n| n.to_string()),
 ///            Some("LATIN SMALL LETTER A".to_string()));
-/// assert_eq!(unicode_names::name('\u{2605}').map(|n| n.to_string()),
+/// assert_eq!(unicode_names2::name('\u{2605}').map(|n| n.to_string()),
 ///            Some("BLACK STAR".to_string()));
-/// assert_eq!(unicode_names::name('☃').map(|n| n.to_string()),
+/// assert_eq!(unicode_names2::name('☃').map(|n| n.to_string()),
 ///            Some("SNOWMAN".to_string()));
 ///
 /// // control code
-/// assert!(unicode_names::name('\x00').is_none());
+/// assert!(unicode_names2::name('\x00').is_none());
 /// // unassigned
-/// assert!(unicode_names::name('\u{10FFFF}').is_none());
+/// assert!(unicode_names2::name('\u{10FFFF}').is_none());
 /// ```
 pub fn name(c: char) -> Option<Name> {
     let cc = c as usize;
@@ -302,13 +302,13 @@ fn split(hash: u64) -> (u32, u32, u32) {
 /// # Example
 ///
 /// ```rust
-/// assert_eq!(unicode_names::character("LATIN SMALL LETTER A"), Some('a'));
-/// assert_eq!(unicode_names::character("latin SMALL letter A"), Some('a'));
-/// assert_eq!(unicode_names::character("latin small letter a"), Some('a'));
-/// assert_eq!(unicode_names::character("BLACK STAR"), Some('★'));
-/// assert_eq!(unicode_names::character("SNOWMAN"), Some('☃'));
+/// assert_eq!(unicode_names2::character("LATIN SMALL LETTER A"), Some('a'));
+/// assert_eq!(unicode_names2::character("latin SMALL letter A"), Some('a'));
+/// assert_eq!(unicode_names2::character("latin small letter a"), Some('a'));
+/// assert_eq!(unicode_names2::character("BLACK STAR"), Some('★'));
+/// assert_eq!(unicode_names2::character("SNOWMAN"), Some('☃'));
 ///
-/// assert_eq!(unicode_names::character("nonsense"), None);
+/// assert_eq!(unicode_names2::character("nonsense"), None);
 /// ```
 pub fn character(name: &str) -> Option<char> {
     // + 1 so that we properly handle the case when `name` has a

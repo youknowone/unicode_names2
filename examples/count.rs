@@ -1,4 +1,4 @@
-extern crate unicode_names;
+extern crate unicode_names2;
 use std::char;
 
 // Count how many code points have names in the standard.
@@ -14,7 +14,7 @@ use std::char;
 fn main() {
     let number = (0u32..0x10FFFF)
         .filter(|x| {
-            char::from_u32(*x).map_or(false, |c| unicode_names::name(c).is_some())
+            char::from_u32(*x).map_or(false, |c| unicode_names2::name(c).is_some())
         })
         .count();
 

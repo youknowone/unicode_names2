@@ -15,7 +15,7 @@ script:
       travis-cargo test &&
       travis-cargo bench &&
       travis-cargo doc &&
-      ( cd unicode_names_macros && travis-cargo build && travis-cargo test; ) &&
+      ( cd unicode_names2_macros && travis-cargo build && travis-cargo test; ) &&
       ( cd generator && travis-cargo build && travis-cargo test; )
 after_success:
   - travis-cargo doc-upload && travis-cargo coveralls

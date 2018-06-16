@@ -11,7 +11,7 @@ extern crate rustc;
 
 extern crate regex;
 
-extern crate unicode_names;
+extern crate unicode_names2;
 
 use syntax::ast;
 use syntax::codemap;
@@ -30,7 +30,7 @@ fn named_char(cx: &mut ExtCtxt, sp: codemap::Span,
               tts: &[ast::TokenTree]) -> Box<MacResult+'static> {
     match base::get_single_str_from_tts(cx, sp, tts, "named_char") {
         None => {}
-        Some(name) => match unicode_names::character(&name) {
+        Some(name) => match unicode_names2::character(&name) {
             None => cx.span_err(sp, &format!("`{}` does not name a character", name)),
 
             // everything worked!
@@ -55,7 +55,7 @@ fn named(cx: &mut ExtCtxt, sp: codemap::Span, tts: &[ast::TokenTree]) -> Box<Mac
             cx.span_err(sp, &format!("unclosed escape in `named!`: {}", full));
         } else {
             let name = c.at(1).unwrap();
-            match unicode_names::character(name) {
+            match unicode_names2::character(name) {
                 Some(c) => return c.to_string(),
                 None => {
                     cx.span_err(sp, &format!("`{}` does not name a character", name));

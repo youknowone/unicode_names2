@@ -1,16 +1,16 @@
-# unicode_names
+# unicode_names2
 
-[![Build Status](https://travis-ci.org/huonw/unicode_names.png)](https://travis-ci.org/huonw/unicode_names) [![Coverage Status](https://coveralls.io/repos/huonw/unicode_names/badge.svg)](https://coveralls.io/r/huonw/unicode_names)
+[![Build Status](https://travis-ci.org/huonw/unicode_names2.png)](https://travis-ci.org/huonw/unicode_names2) [![Coverage Status](https://coveralls.io/repos/huonw/unicode_names2/badge.svg)](https://coveralls.io/r/huonw/unicode_names2)
 
 Time and memory efficiently mapping characters to and from their
 Unicode 7.0 names, at runtime and compile-time.
 
 ```rust
-extern crate unicode_names;
+extern crate unicode_names2;
 
 fn main() {
-    println!("☃ is called {}", unicode_names::name('☃')); // SNOWMAN
-    println!("{} is happy", unicode_names::character("white smiling face")); // ☺
+    println!("☃ is called {}", unicode_names2::name('☃')); // SNOWMAN
+    println!("{} is happy", unicode_names2::character("white smiling face")); // ☺
     // (NB. case insensitivity)
 }
 ```

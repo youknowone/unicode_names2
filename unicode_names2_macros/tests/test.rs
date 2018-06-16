@@ -1,5 +1,5 @@
 #![feature(plugin)]
-#![plugin(unicode_names_macros)]
+#![plugin(unicode_names2_macros)]
 
 #[test]
 fn named_char() {
