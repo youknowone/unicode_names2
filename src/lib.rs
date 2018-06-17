@@ -1,7 +1,7 @@
 //! Convert between characters and their standard names.
 //!
 //! This crate provides two functions for mapping from a `char` to the
-//! name given by the Unicode standard (7.0). There are no runtime
+//! name given by the Unicode standard (8.0). There are no runtime
 //! requirements so this is usable with only `core` (this requires
 //! specifying the `no_std` cargo feature). The tables are heavily
 //! compressed, but still large (500KB), and still offer efficient
@@ -18,7 +18,7 @@
 //! }
 //! ```
 //!
-//! [**Source**](https://github.com/huonw/unicode_names2).
+//! [**Source**](https://github.com/ProgVal/unicode_names2).
 //!
 //! # Macros
 //!
@@ -54,8 +54,8 @@
 //!
 //! ```toml
 //! [dependencies]
-//! unicode_names2 = "0.1"
-//! unicode_names2_macros = "0.1"
+//! unicode_names2 = "0.2.1"
+//! unicode_names2_macros = "0.2"
 //! ```
 
 #![cfg_attr(feature = "no_std", feature(no_std, core))]
