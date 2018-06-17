@@ -4,9 +4,8 @@
 
 #![feature(quote, plugin_registrar, plugin, rustc_private)]
 
-#![plugin(regex_macros)]
-
 extern crate syntax;
+extern crate syntax_pos;
 extern crate rustc;
 extern crate rustc_plugin;
 
@@ -17,7 +16,7 @@ extern crate unicode_names2;
 use syntax::ast;
 use syntax::tokenstream::TokenTree;
 use syntax::codemap;
-use syntax::parse::token;
+use syntax_pos::symbol::Symbol;
 use syntax::ext::base::{self, ExtCtxt, MacResult, MacEager, DummyResult};
 use syntax::ext::build::AstBuilder;
 use rustc_plugin::Registry;
@@ -49,9 +48,9 @@ fn named(cx: &mut ExtCtxt, sp: codemap::Span, tts: &[TokenTree]) -> Box<MacResul
     };
 
      // make sure unclosed braces don't escape.
-    static NAMES: regex::Regex = regex!(r"\\N\{(.*?)(?:\}|$)");
+    let names_re = regex::Regex::new(r"\\N\{(.*?)(?:\}|$)").unwrap();
 
-    let new = NAMES.replace_all(&string, |c: &regex::Captures| {
+    let new = names_re.replace_all(&string, |c: &regex::Captures| {
         let full = c.at(0).unwrap();
         if !full.ends_with("}") {
             cx.span_err(sp, &format!("unclosed escape in `named!`: {}", full));
@@ -68,5 +67,5 @@ fn named(cx: &mut ExtCtxt, sp: codemap::Span, tts: &[TokenTree]) -> Box<MacResul
         String::new()
     });
 
-    MacEager::expr(cx.expr_str(sp, token::intern_and_get_ident(&new)))
+    MacEager::expr(cx.expr_str(sp, Symbol::intern(&new)))
 }

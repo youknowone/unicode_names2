@@ -61,7 +61,7 @@
 #![cfg_attr(feature = "no_std", feature(no_std, core))]
 #![cfg_attr(feature = "no_std", no_std)]
 
-#![cfg_attr(test, feature(test, inclusive_range_syntax))]
+#![cfg_attr(test, feature(test))]
 #![deny(missing_docs, unsafe_code)]
 
 #[cfg(feature = "no_std")]
@@ -444,9 +444,8 @@ static ASCII_UPPER_MAP: [u8; 256] = [
 #[cfg(test)]
 mod tests {
     use std::prelude::v1::*;
-    use std::ascii::AsciiExt;
     use std::char;
-    use rand::{self, XorShiftRng, SeedableRng};
+    use rand::{seq, XorShiftRng, SeedableRng};
 
     use test::{self, Bencher};
     use super::{generated, name, character, is_cjk_unified_ideograph, jamo, Name};
@@ -547,7 +546,7 @@ mod tests {
     #[test]
     fn cjk_unified_ideograph_exhaustive() {
         for &(lo, hi) in generated::CJK_IDEOGRAPH_RANGES.iter() {
-            for x in lo as u32 ... hi as u32 {
+            for x in lo as u32 ..= hi as u32 {
                 let c = char::from_u32(x).unwrap();
 
                 let real_name = format!("CJK UNIFIED IDEOGRAPH-{:X}", x);
@@ -611,17 +610,18 @@ mod tests {
     #[bench]
     fn name_10000_invalid(b: &mut Bencher) {
         // be consistent across runs, but avoid sequential/caching.
-        let mut rng: XorShiftRng = SeedableRng::from_seed([0xFF00FF00, 0xF0F0F0F0,
-                                                           0x00FF00FF, 0x0F0F0F0F]);
-        let chars = rand::sample(&mut rng,
-                                 (0u32..0x10FFFF)
-                                 .filter_map(|x| {
-                                     match char::from_u32(x) {
-                                         Some(c) if name(c).is_none() => Some(c),
-                                         _ => None
-                                     }
-                                 }),
-                                 10000);
+        let mut rng: XorShiftRng = SeedableRng::from_seed([0xFF, 0x00, 0xFF, 0x00, 0xF0, 0xF0, 0xF0, 0xF0,
+                                                           0x00, 0xFF, 0x00, 0xFF, 0x0F, 0x0F, 0x0F, 0x0F]);
+        let chars = seq::sample_iter(&mut rng,
+                                     (0u32..0x10FFFF)
+                                     .filter_map(|x| {
+                                         match char::from_u32(x) {
+                                             Some(c) if name(c).is_none() => Some(c),
+                                             _ => None
+                                         }
+                                     }),
+                                     10000)
+            .unwrap();
 
         b.iter(|| {
             for &c in chars.iter() {
@@ -652,12 +652,13 @@ mod tests {
     #[bench]
     fn character_10000(b: &mut Bencher) {
         // be consistent across runs, but avoid sequential/caching.
-        let mut rng: XorShiftRng = SeedableRng::from_seed([0xFF00FF00, 0xF0F0F0F0,
-                                                           0x00FF00FF, 0x0F0F0F0F]);
+        let mut rng: XorShiftRng = SeedableRng::from_seed([0xFF, 0x00, 0xFF, 0x00, 0xF0, 0xF0, 0xF0, 0xF0,
+                                                           0x00, 0xFF, 0x00, 0xFF, 0x0F, 0x0F, 0x0F, 0x0F]);
 
-        let names = rand::sample(&mut rng,
-                                 (0u32..0x10FFFFF).filter_map(|x| char::from_u32(x).and_then(name)),
-                                 10000)
+        let names = seq::sample_iter(&mut rng,
+                                     (0u32..0x10FFFFF).filter_map(|x| char::from_u32(x).and_then(name)),
+                                     10000)
+            .unwrap()
             .iter()
             .map(|n: &Name| n.to_string())
             .collect::<Vec<_>>();

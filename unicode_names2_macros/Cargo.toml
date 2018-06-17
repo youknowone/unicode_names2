@@ -16,8 +16,7 @@ description = "Support macros for `unicode_names2`."
 unstable = []
 
 [dependencies]
-regex = "0.1.8"
-regex_macros = "0.1.2"
+regex = "0.1.77"
 
 [dependencies.unicode_names2]
 path = ".."
