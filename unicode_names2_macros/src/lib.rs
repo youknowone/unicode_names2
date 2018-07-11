@@ -2,7 +2,7 @@
 
 #![crate_type="dylib"]
 
-#![feature(quote, plugin_registrar, plugin, rustc_private)]
+#![feature(plugin_registrar, plugin, rustc_private)]
 
 extern crate syntax;
 extern crate syntax_pos;
