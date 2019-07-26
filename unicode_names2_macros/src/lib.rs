@@ -15,7 +15,7 @@ extern crate unicode_names2;
 
 use syntax::ast;
 use syntax::tokenstream::TokenTree;
-use syntax::codemap;
+use syntax::source_map;
 use syntax_pos::symbol::Symbol;
 use syntax::ext::base::{self, ExtCtxt, MacResult, MacEager, DummyResult};
 use syntax::ext::build::AstBuilder;
@@ -27,7 +27,7 @@ pub fn plugin_registrar(registrar: &mut Registry) {
     registrar.register_macro("named_char", named_char);
     registrar.register_macro("named", named);
 }
-fn named_char(cx: &mut ExtCtxt, sp: codemap::Span,
+fn named_char(cx: &mut ExtCtxt, sp: source_map::Span,
               tts: &[TokenTree]) -> Box<MacResult+'static> {
     match base::get_single_str_from_tts(cx, sp, tts, "named_char") {
         None => {}
@@ -41,7 +41,7 @@ fn named_char(cx: &mut ExtCtxt, sp: codemap::Span,
     // failed :(
     DummyResult::expr(sp)
 }
-fn named(cx: &mut ExtCtxt, sp: codemap::Span, tts: &[TokenTree]) -> Box<MacResult+'static> {
+fn named(cx: &mut ExtCtxt, sp: source_map::Span, tts: &[TokenTree]) -> Box<MacResult+'static> {
     let string = match base::get_single_str_from_tts(cx, sp, tts, "named") {
         None => return DummyResult::expr(sp),
         Some(s) => s
