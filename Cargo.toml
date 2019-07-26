@@ -1,7 +1,7 @@
 [package]
 
 name = "unicode_names2"
-version = "0.2.2"
+version = "0.3.0"
 authors = ["Huon Wilson <dbau.pp@gmail.com>",
            "Kang Seonghoon <public+rust@mearie.org>",
            "Valentin Lorentz <progval+git@progval.net>",]
@@ -33,7 +33,7 @@ no_std = []
 
 [dev-dependencies.unicode_names2_macros]
 path = "unicode_names2_macros"
-version = "0.2.0"
+version = "0.3"
 
 [dev-dependencies]
 rand = "0.5.1"
