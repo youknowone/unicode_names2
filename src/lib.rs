@@ -346,8 +346,8 @@ pub fn character(name: &str) -> Option<char> {
         let mut v = 0u32;
         for &c in remaining.iter() {
             match c {
-                b'0'...b'9' => v = (v << 4) | (c - b'0') as u32,
-                b'A'...b'F' => v = (v << 4) | (c - b'A' + 10) as u32,
+                b'0'..=b'9' => v = (v << 4) | (c - b'0') as u32,
+                b'A'..=b'F' => v = (v << 4) | (c - b'A' + 10) as u32,
                 _ => return None,
             }
         }
