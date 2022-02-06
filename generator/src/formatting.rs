@@ -4,7 +4,7 @@ use std::io::prelude::*;
 static LINE_LIMIT: usize = 95;
 
 pub struct Context {
-    pub out: Box<Write+'static>
+    pub out: Box<dyn Write+'static>
 }
 
 impl Context {

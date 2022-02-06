@@ -80,7 +80,7 @@ impl fmt::Debug for IterStr {
     fn fmt(&self, fmtr: &mut fmt::Formatter) -> fmt::Result {
         let printed = self.clone();
         for s in printed {
-            try!(write!(fmtr, "{}", s))
+            write!(fmtr, "{}", s)?
         }
         Ok(())
     }
