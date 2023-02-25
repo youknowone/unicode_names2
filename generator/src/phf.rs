@@ -34,7 +34,7 @@ fn split(hash: u64) -> Hash {
 #[derive(Copy, Clone)]
 struct Hash { g: u32, f1: u32, f2: u32 }
 
-fn try_phf_table(values: &[(char, String)],
+fn try_phf_table(values: &[(char, &str)],
                  lambda: usize, seed: u64) -> Option<(Vec<(u32, u32)>, Vec<char>)> {
 
     let hashes: Vec<_> =
@@ -130,7 +130,7 @@ fn try_phf_table(values: &[(char, String)],
     Some((disps, map))
 }
 
-pub fn create_phf(data: &[(char, String)], lambda: usize,
+pub fn create_phf(data: &[(char, &str)], lambda: usize,
                   max_tries: usize) -> (u64, Vec<(u32, u32)>, Vec<char>) {
     let start = time::precise_time_s();
 

@@ -30,7 +30,7 @@ const UNICODE_DATA: &str = include_str!("../../data/UnicodeData.txt");
 const SPLITTERS: &[u8] = b"-";
 
 struct TableData {
-    codepoint_names: Vec<(char, String)>,
+    codepoint_names: Vec<(char, &'static str)>,
     cjk_ideograph_ranges: Vec<(char, char)>,
 }
 
@@ -89,7 +89,7 @@ fn get_table_data() -> TableData {
                 }
             }
         } else {
-            codepoint_names.push((cp, name.to_string()))
+            codepoint_names.push((cp, name))
         }
     }
     TableData {
@@ -105,7 +105,7 @@ fn write_cjk_ideograph_ranges(ctxt: &mut Context, ranges: &[(char, char)]) {
 /// Construct a huge string storing the text data, and return it,
 /// along with information about the position and frequency of the
 /// constituent words of the input.
-fn create_lexicon_and_offsets(mut codepoint_names: Vec<(char, String)>) -> (String,
+fn create_lexicon_and_offsets(mut codepoint_names: Vec<(char, &str)>) -> (String,
                                                                             Vec<(usize, Vec<u8>,
                                                                                  usize)>) {
     codepoint_names.sort_by(|a, b| a.1.len().cmp(&b.1.len()).reverse());
@@ -207,7 +207,7 @@ fn bin_data(dat: &[u32]) -> (Vec<u32>, Vec<u32>, usize) {
     data
 }
 
-fn write_codepoint_maps(ctxt: &mut Context, codepoint_names: Vec<(char, String)>) {
+fn write_codepoint_maps(ctxt: &mut Context, codepoint_names: Vec<(char, &str)>) {
     let (lexicon_string, mut lexicon_words) = create_lexicon_and_offsets(codepoint_names.clone());
 
     let num_escapes = (lexicon_words.len() + 255) / 256;
