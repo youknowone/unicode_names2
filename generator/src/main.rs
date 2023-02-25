@@ -5,7 +5,7 @@ extern crate rand;
 use std::{cmp, char};
 use std::collections::{HashMap, hash_map};
 use std::fs::{File, self};
-use std::io::{BufReader, BufWriter, self};
+use std::io::{BufWriter, self};
 use std::io::prelude::*;
 use std::iter::repeat;
 use std::path::Path;
@@ -23,41 +23,43 @@ mod phf;
 mod trie;
 mod util;
 
-static OUT_FILE: &str = "../src/generated.rs";
-static PHF_OUT_FILE: &str = "../src/generated_phf.rs";
-static IN_FILE: &str = "../data/UnicodeData.txt";
+const OUT_FILE: &str = "../src/generated.rs";
+const PHF_OUT_FILE: &str = "../src/generated_phf.rs";
+const UNICODE_DATA: &str = include_str!("../../data/UnicodeData.txt");
 
-static SPLITTERS: &[u8] = b"-";
+const SPLITTERS: &[u8] = b"-";
 
-fn get_table_data() -> (Vec<(char, String)>, Vec<(char, char)>) {
-    macro_rules! extract {
-        ($line: expr) => {{
-            let line = $line;
-            let mut splits = line.split(';');
-            let cp = splits.next().and_then(|s| u32::from_str_radix(s, 16).ok())
-                .unwrap_or_else(|| panic!("invalid {}", line));
-            let c = match char::from_u32(cp) {
-                None => continue,
-                Some(c) => c,
-            };
-            let name = splits.next().unwrap_or_else(|| panic!("missing name {}", line));
-            (c, name)
-        }}
+struct TableData {
+    codepoint_names: Vec<(char, String)>,
+    cjk_ideograph_ranges: Vec<(char, char)>,
+}
+
+fn get_table_data() -> TableData {
+    fn extract(line: &'static str) -> Option<(char, &'static str)> {
+        let splits: Vec<_> = line.splitn(15, ';').collect();
+        assert_eq!(splits.len(), 15);
+        let s = splits[0];
+        let cp = u32::from_str_radix(s, 16).ok()
+            .unwrap_or_else(|| panic!("invalid {}", line));
+        let c = char::from_u32(cp)?;
+        let name = splits[1];
+        Some((c, name))
     }
 
-    let r = BufReader::new(File::open(Path::new(IN_FILE)).unwrap());
-    let mut iter = r.lines().map(|x| x.unwrap());
+    let mut iter = UNICODE_DATA.split('\n');
 
     let mut codepoint_names = vec![];
     let mut cjk_ideograph_ranges = vec![];
 
-    loop {
-        let l = match iter.next() {
-            Some(l) => l,
-            None => break
+    while let Some(l) = iter.next() {
+        if l.is_empty() {
+            break;
+        }
+        let (cp, name) = if let Some(extracted) = extract(l.trim()) {
+            extracted
+        } else {
+            continue;
         };
-
-        let (cp, name) = extract!(l.trim());
         if name.starts_with('<') {
             assert!(name.ends_with('>'), "should >: {}", name);
             let name = &name[1..name.len() - 1];
@@ -65,7 +67,11 @@ fn get_table_data() -> (Vec<(char, String)>, Vec<(char, char)>) {
                 assert!(name.ends_with("First"));
                 // should be CJK Ideograph ..., Last
                 let line2 = iter.next().expect("unclosed ideograph range");
-                let (cp2, name2) = extract!(line2.trim());
+                let (cp2, name2) = if let Some(extracted) = extract(line2.trim()) {
+                    extracted
+                } else {
+                    continue;
+                };
                 assert_eq!(&*name.replace("First", "Last"),
                            &name2[1..name2.len() - 1]);
 
@@ -86,7 +92,10 @@ fn get_table_data() -> (Vec<(char, String)>, Vec<(char, char)>) {
             codepoint_names.push((cp, name.to_string()))
         }
     }
-    (codepoint_names, cjk_ideograph_ranges)
+    TableData {
+        codepoint_names,
+        cjk_ideograph_ranges,
+    }
 }
 
 fn write_cjk_ideograph_ranges(ctxt: &mut Context, ranges: &[(char, char)]) {
@@ -350,7 +359,7 @@ fn main() {
     let lambda = matches.opt_str("phf-lambda");
     let tries = matches.opt_str("phf-tries");
 
-    let (mut codepoint_names, cjk) = get_table_data();
+    let TableData { mut codepoint_names, cjk_ideograph_ranges: cjk } = get_table_data();
     match matches.opt_str("truncate").map(
             |s| s.parse().ok().expect("truncate should be an integer")) {
         Some(n) => codepoint_names.truncate(n),
