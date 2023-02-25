@@ -30,12 +30,12 @@ const UNICODE_DATA: &str = include_str!("../../data/UnicodeData.txt");
 const SPLITTERS: &[u8] = b"-";
 
 struct TableData {
-    codepoint_names: Vec<(char, &'static str)>,
+    codepoint_names: Vec<(char, &'static str, &'static str)>,
     cjk_ideograph_ranges: Vec<(char, char)>,
 }
 
 fn get_table_data() -> TableData {
-    fn extract(line: &'static str) -> Option<(char, &'static str)> {
+    fn extract(line: &'static str) -> Option<(char, &'static str, &'static str)> {
         let splits: Vec<_> = line.splitn(15, ';').collect();
         assert_eq!(splits.len(), 15);
         let s = splits[0];
@@ -43,7 +43,8 @@ fn get_table_data() -> TableData {
             .unwrap_or_else(|| panic!("invalid {}", line));
         let c = char::from_u32(cp)?;
         let name = splits[1];
-        Some((c, name))
+        let alias = splits[10];
+        Some((c, name, alias))
     }
 
     let mut iter = UNICODE_DATA.split('\n');
@@ -55,7 +56,7 @@ fn get_table_data() -> TableData {
         if l.is_empty() {
             break;
         }
-        let (cp, name) = if let Some(extracted) = extract(l.trim()) {
+        let (cp, name, alias) = if let Some(extracted) = extract(l.trim()) {
             extracted
         } else {
             continue;
@@ -67,7 +68,7 @@ fn get_table_data() -> TableData {
                 assert!(name.ends_with("First"));
                 // should be CJK Ideograph ..., Last
                 let line2 = iter.next().expect("unclosed ideograph range");
-                let (cp2, name2) = if let Some(extracted) = extract(line2.trim()) {
+                let (cp2, name2, _) = if let Some(extracted) = extract(line2.trim()) {
                     extracted
                 } else {
                     continue;
@@ -89,7 +90,7 @@ fn get_table_data() -> TableData {
                 }
             }
         } else {
-            codepoint_names.push((cp, name))
+            codepoint_names.push((cp, name, alias))
         }
     }
     TableData {
@@ -366,12 +367,18 @@ fn main() {
         None => {}
     }
 
+    let display_names: Vec<_> = codepoint_names.iter().map(|&(c, n, _)| (c, n)).collect();
+    let aliases: Vec<_> = codepoint_names.iter().filter_map(|&(c, _, a)| if a.is_empty() {
+        None
+    } else {
+        Some((c, a))
+    }).collect();
     if do_phf {
-        let (n, disps, data) =
-            phf::create_phf(&codepoint_names,
-                            lambda.map(|s| s.parse().ok().expect("invalid -l")).unwrap_or(3),
-                            tries.map(|s| s.parse().ok().expect("invalid -t")).unwrap_or(2));
+        let lambda = lambda.map(|s| s.parse().ok().expect("invalid -l")).unwrap_or(3);
+        let tries = tries.map(|s| s.parse().ok().expect("invalid -t")).unwrap_or(2);
 
+        let (n, disps, data) =
+            phf::create_phf(&display_names, lambda, tries);
 
         w!(ctxt, "pub static NAME2CODE_N: u64 = {};\n", n);
         ctxt.write_debugs("NAME2CODE_DISP",
@@ -379,13 +386,23 @@ fn main() {
                          &disps);
 
         ctxt.write_debugs("NAME2CODE_CODE", "char", &data);
+
+        // let (n, disps, data) =
+        //     phf::create_phf(&aliases, lambda, tries);
+
+        // w!(ctxt, "pub static ALIAS2CODE_N: u64 = {};\n", n);
+        // ctxt.write_debugs("ALIAS2CODE_DISP",
+        //                 "(u16, u16)",
+        //                 &disps);
+
+        // ctxt.write_debugs("ALIAS2CODE_CODE", "char", &data);
     } else {
         if lambda.is_some() { println!("-l/--phf-lambda only applies with --phf") }
         if tries.is_some() { println!("-t/--phf-tries only applies with --phf") }
 
         write_cjk_ideograph_ranges(&mut ctxt, &cjk);
         ctxt.out.write(b"\n").unwrap();
-        write_codepoint_maps(&mut ctxt, codepoint_names);
+        write_codepoint_maps(&mut ctxt, display_names);
     }
 
     match file {
