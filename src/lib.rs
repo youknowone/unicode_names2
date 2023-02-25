@@ -70,7 +70,6 @@ use core::{char, fmt};
 use generated::{
     MAX_NAME_LENGTH, PHRASEBOOK_OFFSETS1, PHRASEBOOK_OFFSETS2, PHRASEBOOK_OFFSET_SHIFT,
 };
-use generated_phf as phf;
 
 #[allow(dead_code)]
 #[rustfmt::skip]
@@ -86,6 +85,11 @@ mod generated_phf {
 }
 #[allow(dead_code)]
 mod jamo;
+
+/// A map of unicode aliases to their corresponding values.
+/// Generated in generator
+#[allow(dead_code)]
+static ALIASES: phf::Map<&'static [u8], char> = include!("generated_alias.rs");
 
 mod iter_str;
 
@@ -288,7 +292,7 @@ pub fn name(c: char) -> Option<Name> {
 }
 
 fn fnv_hash<I: Iterator<Item = u8>>(x: I) -> u64 {
-    let mut g = 0xcbf29ce484222325 ^ phf::NAME2CODE_N;
+    let mut g = 0xcbf29ce484222325 ^ generated_phf::NAME2CODE_N;
     for b in x {
         g ^= b as u64;
         g = g.wrapping_mul(0x100000001b3);
@@ -308,6 +312,11 @@ fn split(hash: u64) -> (u32, u32, u32) {
     )
 }
 
+/// Get alias value from alias name, returns `None` if the alias is not found.
+fn character_by_alias(name: &[u8]) -> Option<char> {
+    ALIASES.get(name).copied()
+}
+
 /// Find the character called `name`, or `None` if no such character
 /// exists.
 ///
@@ -321,6 +330,7 @@ fn split(hash: u64) -> (u32, u32, u32) {
 /// assert_eq!(unicode_names2::character("latin small letter a"), Some('a'));
 /// assert_eq!(unicode_names2::character("BLACK STAR"), Some('★'));
 /// assert_eq!(unicode_names2::character("SNOWMAN"), Some('☃'));
+/// assert_eq!(unicode_names2::character("BACKSPACE"), Some('\x08'));
 ///
 /// assert_eq!(unicode_names2::character("nonsense"), None);
 /// ```
@@ -385,12 +395,12 @@ pub fn character(search_name: &str) -> Option<char> {
     // get the parts of the hash...
     let (g, f1, f2) = split(fnv_hash(search_name.iter().copied()));
     // ...and the appropriate displacements...
-    let (d1, d2) = phf::NAME2CODE_DISP[g as usize % phf::NAME2CODE_DISP.len()];
+    let (d1, d2) = generated_phf::NAME2CODE_DISP[g as usize % generated_phf::NAME2CODE_DISP.len()];
 
     // ...to find the right index...
     let idx = displace(f1, f2, d1 as u32, d2 as u32) as usize;
     // ...for looking up the codepoint.
-    let codepoint = phf::NAME2CODE_CODE[idx % phf::NAME2CODE_CODE.len()];
+    let codepoint = generated_phf::NAME2CODE_CODE[idx % generated_phf::NAME2CODE_CODE.len()];
 
     // Now check that this is actually correct. Since this is a
     // perfect hash table, valid names map precisely to their code
@@ -402,7 +412,7 @@ pub fn character(search_name: &str) -> Option<char> {
             if true {
                 debug_assert!(false)
             }
-            return None;
+            return character_by_alias(search_name);
         }
         Some(name) => name,
     };
@@ -414,7 +424,7 @@ pub fn character(search_name: &str) -> Option<char> {
         let part = part.as_bytes();
         let part_l = part.len();
         if passed_name.len() < part_l || &passed_name[..part_l] != part {
-            return None;
+            return character_by_alias(search_name);
         }
         passed_name = &passed_name[part_l..]
     }
@@ -594,6 +604,13 @@ mod tests {
         assert_eq!(character("CJK UNIFIED IDEOGRAPH-12345"), None);
         assert_eq!(character("CJK UNIFIED IDEOGRAPH-2A6FF"), None); // between Ext B and Ext C
         assert_eq!(character("CJK UNIFIED IDEOGRAPH-2A6FF"), None);
+    }
+
+    #[test]
+    fn character_by_alias() {
+        assert_eq!(super::character_by_alias(b"NEW LINE"), Some('\n'));
+        assert_eq!(super::character_by_alias(b"BACKSPACE"), Some('\u{8}'));
+        assert_eq!(super::character_by_alias(b"NOT AN ALIAS"), None);
     }
 
     #[bench]
