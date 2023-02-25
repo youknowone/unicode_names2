@@ -86,6 +86,11 @@ mod generated_phf {
 #[allow(dead_code)]
 mod jamo;
 
+/// A map of unicode aliases to their corresponding values.
+/// Generated in generator
+#[allow(dead_code)]
+static ALIASES: phf::Map<&'static [u8], char> = include!("generated_alias.rs");
+
 mod iter_str;
 
 static HANGUL_SYLLABLE_PREFIX: &str = "HANGUL SYLLABLE ";
@@ -286,6 +291,16 @@ pub fn name(c: char) -> Option<Name> {
     }
 }
 
+/// Get alias value from alias name, returns `None` if the alias is not found.
+fn character_by_alias(name: &[u8]) -> Option<char> {
+    println!(
+        "name {name}, {alias:?}",
+        name = std::str::from_utf8(name).unwrap(),
+        alias = ALIASES.get(name)
+    );
+    ALIASES.get(name).copied()
+}
+
 /// Find the character called `name`, or `None` if no such character
 /// exists.
 ///
@@ -299,6 +314,7 @@ pub fn name(c: char) -> Option<Name> {
 /// assert_eq!(unicode_names2::character("latin small letter a"), Some('a'));
 /// assert_eq!(unicode_names2::character("BLACK STAR"), Some('★'));
 /// assert_eq!(unicode_names2::character("SNOWMAN"), Some('☃'));
+/// assert_eq!(unicode_names2::character("BACKSPACE"), Some('\x08'));
 ///
 /// assert_eq!(unicode_names2::character("nonsense"), None);
 /// ```
@@ -360,7 +376,9 @@ pub fn character(search_name: &str) -> Option<char> {
         }
     }
 
-    let codepoint = *generated_phf::NAMES.get(search_name)?;
+    let Some(&codepoint) = generated_phf::NAMES.get(search_name) else {
+        return character_by_alias(search_name);
+    };
 
     // Now check that this is actually correct. Since this is a
     // perfect hash table, valid names map precisely to their code
@@ -564,6 +582,13 @@ mod tests {
         assert_eq!(character("CJK UNIFIED IDEOGRAPH-12345"), None);
         assert_eq!(character("CJK UNIFIED IDEOGRAPH-2A6FF"), None); // between Ext B and Ext C
         assert_eq!(character("CJK UNIFIED IDEOGRAPH-2A6FF"), None);
+    }
+
+    #[test]
+    fn character_by_alias() {
+        assert_eq!(super::character_by_alias(b"NEW LINE"), Some('\n'));
+        assert_eq!(super::character_by_alias(b"BACKSPACE"), Some('\u{8}'));
+        assert_eq!(super::character_by_alias(b"NOT AN ALIAS"), None);
     }
 
     #[bench]
