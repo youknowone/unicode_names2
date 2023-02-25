@@ -35,5 +35,8 @@ no_std = []
 path = "unicode_names2_macros"
 version = ">=0.3, <0.7"
 
+[dependencies]
+phf = { version = "0.11.1", default-features = false }
+
 [dev-dependencies]
 rand = "0.5.1"

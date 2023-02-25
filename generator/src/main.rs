@@ -25,7 +25,13 @@ mod util;
 
 const OUT_FILE: &str = "../src/generated.rs";
 const PHF_OUT_FILE: &str = "../src/generated_phf.rs";
+const ALIAS_OUT_FILE: &str = "../src/generated_alias.rs";
 const UNICODE_DATA: &str = include_str!("../../data/UnicodeData.txt");
+/// Unicode aliases
+///
+/// [NamesList.txt] contents contains a map of unicode aliases to their corresponding values.
+///
+/// [NamesList.txt]: https://www.unicode.org/Public/14.0.0/ucd/NameAliases.txt
 const NAME_ALIASES: &str = include_str!("../../data/NameAliases.txt");
 
 const SPLITTERS: &[u8] = b"-";
@@ -102,6 +108,7 @@ fn get_table_data() -> TableData {
 struct Alias {
     code: &'static str,
     alias: &'static str,
+    #[allow(dead_code)]
     category: &'static str,
 }
 
@@ -421,4 +428,16 @@ fn main() {
         Some(f) => fs::rename(&f.with_extension("tmp"), &f).unwrap(),
         None => {}
     }
+
+    let mut aliases = phf_codegen::Map::new();
+    for Alias {code, alias, ..} in get_aliases().into_iter() {
+        let formatted = format!("'\\u{{{code}}}'");
+        aliases.entry(alias, &formatted);
+    }
+    let aliases = aliases.build().to_string().replace("(\"", "(b\"");
+    writeln!(
+        BufWriter::new(File::create(ALIAS_OUT_FILE).unwrap()),
+        "{aliases}",
+    )
+    .unwrap();
 }

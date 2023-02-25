@@ -76,6 +76,8 @@ extern crate core;
 #[macro_use]
 extern crate std;
 
+extern crate phf;
+
 #[cfg(test)] extern crate test;
 #[cfg(test)] extern crate rand;
 
@@ -86,11 +88,15 @@ use core::char;
 use core::fmt;
 
 use generated::{PHRASEBOOK_OFFSET_SHIFT, PHRASEBOOK_OFFSETS1, PHRASEBOOK_OFFSETS2, MAX_NAME_LENGTH};
-use generated_phf as phf;
 
 #[allow(dead_code)] mod generated;
 #[allow(dead_code)] mod generated_phf;
 #[allow(dead_code)] mod jamo;
+
+/// A map of unicode aliases to their corresponding values.
+/// Generated in generator
+#[allow(dead_code)]
+static ALIASES: phf::Map<&'static [u8], char> = include!("generated_alias.rs");
 
 mod iter_str;
 
@@ -282,7 +288,7 @@ pub fn name(c: char) -> Option<Name> {
 }
 
 fn fnv_hash<I: Iterator<Item=u8>>(x: I) -> u64 {
-    let mut g = 0xcbf29ce484222325 ^ phf::NAME2CODE_N;
+    let mut g = 0xcbf29ce484222325 ^ generated_phf::NAME2CODE_N;
     for b in x { g ^= b as u64; g = g.wrapping_mul(0x100000001b3); }
     g
 }
@@ -295,6 +301,19 @@ fn split(hash: u64) -> (u32, u32, u32) {
     ((hash & mask) as u32,
      ((hash >> bits) & mask) as u32,
      ((hash >> (2 * bits)) & mask) as u32)
+}
+
+/// Get alias value from alias name, returns `None` if the alias is not found.
+///
+/// # Examples
+///
+/// ```
+///
+/// assert_eq!(character_by_alias("NEW LINE"), Some('\n'));
+/// assert_eq!(character_by_alias("BACKSPACE"), Some('\u{8}'));
+/// assert_eq!(character_by_alias("NOT AN ALIAS"), None);
+fn character_by_alias(name: &[u8]) -> Option<char> {
+    ALIASES.get(name).copied()
 }
 
 /// Find the character called `name`, or `None` if no such character
@@ -310,6 +329,7 @@ fn split(hash: u64) -> (u32, u32, u32) {
 /// assert_eq!(unicode_names2::character("latin small letter a"), Some('a'));
 /// assert_eq!(unicode_names2::character("BLACK STAR"), Some('★'));
 /// assert_eq!(unicode_names2::character("SNOWMAN"), Some('☃'));
+/// assert_eq!(unicode_names2::character("BACKSPACE"), Some('\x08'));
 ///
 /// assert_eq!(unicode_names2::character("nonsense"), None);
 /// ```
@@ -320,10 +340,8 @@ pub fn character(name: &str) -> Option<char> {
     for (place, byte) in buf.iter_mut().zip(name.bytes()) {
         *place = ASCII_UPPER_MAP[byte as usize]
     }
-    let search_name = match buf.get(..name.len()) {
-        None => return None,
-        Some(search_name) => search_name,
-    };
+
+    let search_name = buf.get(..name.len())?;
 
     // try `HANGUL SYLLABLE <choseong><jungseong><jongseong>`
     if search_name.starts_with(HANGUL_SYLLABLE_PREFIX.as_bytes()) {
@@ -375,12 +393,12 @@ pub fn character(name: &str) -> Option<char> {
     // get the parts of the hash...
     let (g, f1, f2) = split(fnv_hash(search_name.iter().map(|x| *x)));
     // ...and the appropriate displacements...
-    let (d1, d2) = phf::NAME2CODE_DISP[g as usize % phf::NAME2CODE_DISP.len()];
+    let (d1, d2) = generated_phf::NAME2CODE_DISP[g as usize % generated_phf::NAME2CODE_DISP.len()];
 
     // ...to find the right index...
     let idx = displace(f1, f2, d1 as u32, d2 as u32) as usize;
     // ...for looking up the codepoint.
-    let codepoint = phf::NAME2CODE_CODE[idx % phf::NAME2CODE_CODE.len()];
+    let codepoint = generated_phf::NAME2CODE_CODE[idx % generated_phf::NAME2CODE_CODE.len()];
 
     // Now check that this is actually correct. Since this is a
     // perfect hash table, valid names map precisely to their code
@@ -390,7 +408,7 @@ pub fn character(name: &str) -> Option<char> {
     let maybe_name = match ::name(codepoint) {
         None => {
             if true { debug_assert!(false) }
-            return None
+            return character_by_alias(search_name);
         }
         Some(name) => name
     };
@@ -402,7 +420,7 @@ pub fn character(name: &str) -> Option<char> {
         let part = part.as_bytes();
         let part_l = part.len();
         if passed_name.len() < part_l || &passed_name[..part_l] != part {
-            return None
+            return character_by_alias(search_name);
         }
         passed_name = &passed_name[part_l..]
     }
