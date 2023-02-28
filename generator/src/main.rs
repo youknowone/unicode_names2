@@ -26,6 +26,7 @@ mod util;
 const OUT_FILE: &str = "../src/generated.rs";
 const PHF_OUT_FILE: &str = "../src/generated_phf.rs";
 const UNICODE_DATA: &str = include_str!("../../data/UnicodeData.txt");
+const NAME_ALIASES: &str = include_str!("../../data/NameAliases.txt");
 
 const SPLITTERS: &[u8] = b"-";
 
@@ -96,6 +97,34 @@ fn get_table_data() -> TableData {
         codepoint_names,
         cjk_ideograph_ranges,
     }
+}
+
+struct Alias {
+    code: &'static str,
+    alias: &'static str,
+    category: &'static str,
+}
+
+fn get_aliases() -> Vec<Alias> {
+    let mut aliases = Vec::new();
+    for line in NAME_ALIASES.split('\n') {
+        if line.is_empty() {
+            continue;
+        }
+        if line.starts_with('#') {
+            continue;
+        }
+        let mut parts = line.splitn(3, ';');
+        let code = parts.next().unwrap();
+        let alias = parts.next().unwrap();
+        let category = parts.next().unwrap();
+        aliases.push(Alias {
+            code,
+            alias,
+            category,
+        });
+    }
+    aliases
 }
 
 fn write_cjk_ideograph_ranges(ctxt: &mut Context, ranges: &[(char, char)]) {
