@@ -1,6 +1,6 @@
 //! A macro that maps unicode names to chars and strings.
 
-#![crate_type="dylib"]
+#![crate_type = "dylib"]
 
 extern crate regex;
 
@@ -17,7 +17,10 @@ impl syn::parse::Parse for CharByName {
         let string: syn::LitStr = input.parse()?;
         let name = string.value();
         match unicode_names2::character(&name) {
-            None => Err(syn::Error::new(string.span(), format!("`{}` does not name a character", name))),
+            None => Err(syn::Error::new(
+                string.span(),
+                format!("`{}` does not name a character", name),
+            )),
             Some(c) => Ok(CharByName(syn::LitChar::new(c, string.span()))),
         }
     }
@@ -45,9 +48,7 @@ impl syn::parse::Parse for StringWithCharNames {
             } else {
                 let name = c.at(1).unwrap();
                 match unicode_names2::character(name) {
-                    Some(c) => {
-                        return c.to_string()
-                    },
+                    Some(c) => return c.to_string(),
                     None => {
                         errors.push(format!("`{}` does not name a character", name));
                     }
@@ -59,8 +60,7 @@ impl syn::parse::Parse for StringWithCharNames {
         if errors.len() > 0 {
             // TODO: show all errors at once?
             Err(syn::Error::new(string.span(), errors.get(0).unwrap()))
-        }
-        else {
+        } else {
             Ok(StringWithCharNames(syn::LitStr::new(&new, string.span())))
         }
     }

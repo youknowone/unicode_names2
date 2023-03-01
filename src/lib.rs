@@ -64,7 +64,6 @@
 
 #![cfg_attr(feature = "no_std", feature(no_std, core))]
 #![cfg_attr(feature = "no_std", no_std)]
-
 #![cfg_attr(test, feature(test))]
 #![deny(missing_docs, unsafe_code)]
 
@@ -76,8 +75,10 @@ extern crate core;
 #[macro_use]
 extern crate std;
 
-#[cfg(test)] extern crate test;
-#[cfg(test)] extern crate rand;
+#[cfg(test)]
+extern crate rand;
+#[cfg(test)]
+extern crate test;
 
 #[cfg(feature = "no_std")]
 use core::prelude::*;
@@ -85,12 +86,17 @@ use core::prelude::*;
 use core::char;
 use core::fmt;
 
-use generated::{PHRASEBOOK_OFFSET_SHIFT, PHRASEBOOK_OFFSETS1, PHRASEBOOK_OFFSETS2, MAX_NAME_LENGTH};
+use generated::{
+    MAX_NAME_LENGTH, PHRASEBOOK_OFFSETS1, PHRASEBOOK_OFFSETS2, PHRASEBOOK_OFFSET_SHIFT,
+};
 use generated_phf as phf;
 
-#[allow(dead_code)] mod generated;
-#[allow(dead_code)] mod generated_phf;
-#[allow(dead_code)] mod jamo;
+#[allow(dead_code)]
+mod generated;
+#[allow(dead_code)]
+mod generated_phf;
+#[allow(dead_code)]
+mod jamo;
 
 mod iter_str;
 
@@ -98,7 +104,9 @@ static HANGUL_SYLLABLE_PREFIX: &'static str = "HANGUL SYLLABLE ";
 static CJK_UNIFIED_IDEOGRAPH_PREFIX: &'static str = "CJK UNIFIED IDEOGRAPH-";
 
 fn is_cjk_unified_ideograph(ch: char) -> bool {
-    generated::CJK_IDEOGRAPH_RANGES.iter().any(|&(lo, hi)| lo <= ch && ch <= hi)
+    generated::CJK_IDEOGRAPH_RANGES
+        .iter()
+        .any(|&(lo, hi)| lo <= ch && ch <= hi)
 }
 
 /// An iterator over the components of a code point's name, it also
@@ -108,7 +116,7 @@ fn is_cjk_unified_ideograph(ch: char) -> bool {
 /// (although iteration is cheap and all names are short).
 #[derive(Clone)]
 pub struct Name {
-    data: Name_
+    data: Name_,
 }
 #[derive(Clone)]
 enum Name_ {
@@ -122,7 +130,7 @@ struct CJK {
     emit_prefix: bool,
     idx: u8,
     // the longest character is 0x10FFFF
-    data: [u8; 6]
+    data: [u8; 6],
 }
 #[derive(Copy)]
 struct Hangul {
@@ -130,10 +138,18 @@ struct Hangul {
     idx: u8,
     // stores the choseong, jungseong, jongseong syllable numbers (in
     // that order)
-    data: [u8; 3]
+    data: [u8; 3],
 }
-impl Clone for CJK { fn clone(&self) -> CJK { *self } }
-impl Clone for Hangul { fn clone(&self) -> Hangul { *self } }
+impl Clone for CJK {
+    fn clone(&self) -> CJK {
+        *self
+    }
+}
+impl Clone for Hangul {
+    fn clone(&self) -> Hangul {
+        *self
+    }
+}
 
 impl Name {
     /// The number of bytes in the name.
@@ -155,12 +171,14 @@ impl Iterator for Name {
                 // we're a CJK unified ideograph
                 if state.emit_prefix {
                     state.emit_prefix = false;
-                    return Some(CJK_UNIFIED_IDEOGRAPH_PREFIX)
+                    return Some(CJK_UNIFIED_IDEOGRAPH_PREFIX);
                 }
                 // run until we've run out of array: the construction
                 // of the data means this is exactly when we have
                 // finished emitting the number.
-                state.data.get(state.idx as usize)
+                state
+                    .data
+                    .get(state.idx as usize)
                     // (avoid conflicting mutable borrow problems)
                     .map(|digit| *digit as usize)
                     .map(|d| {
@@ -172,19 +190,15 @@ impl Iterator for Name {
             Name_::Hangul(ref mut state) => {
                 if state.emit_prefix {
                     state.emit_prefix = false;
-                    return Some(HANGUL_SYLLABLE_PREFIX)
+                    return Some(HANGUL_SYLLABLE_PREFIX);
                 }
 
                 let idx = state.idx as usize;
-                state.data.get(idx)
-                    .map(|x| *x as usize)
-                    .map(|x| {
-                        // progressively walk through the syllables
-                        state.idx += 1;
-                        [jamo::CHOSEONG,
-                         jamo::JUNGSEONG,
-                         jamo::JONGSEONG][idx][x]
-                    })
+                state.data.get(idx).map(|x| *x as usize).map(|x| {
+                    // progressively walk through the syllables
+                    state.idx += 1;
+                    [jamo::CHOSEONG, jamo::JUNGSEONG, jamo::JONGSEONG][idx][x]
+                })
             }
         }
     }
@@ -236,8 +250,8 @@ impl fmt::Display for Name {
 /// ```
 pub fn name(c: char) -> Option<Name> {
     let cc = c as usize;
-    let offset = (PHRASEBOOK_OFFSETS1[cc >> PHRASEBOOK_OFFSET_SHIFT] as usize)
-        << PHRASEBOOK_OFFSET_SHIFT;
+    let offset =
+        (PHRASEBOOK_OFFSETS1[cc >> PHRASEBOOK_OFFSET_SHIFT] as usize) << PHRASEBOOK_OFFSET_SHIFT;
 
     let mask = (1 << PHRASEBOOK_OFFSET_SHIFT) - 1;
     let offset = PHRASEBOOK_OFFSETS2[offset + (cc & mask) as usize];
@@ -250,7 +264,9 @@ pub fn name(c: char) -> Option<Name> {
             for place in data.iter_mut().rev() {
                 // this would be incorrect if U+0000 was CJK unified
                 // ideograph, but it's not, so it's fine.
-                if number == 0 { break }
+                if number == 0 {
+                    break;
+                }
                 *place = (number % 16) as u8;
                 number /= 16;
                 data_start -= 1;
@@ -259,31 +275,32 @@ pub fn name(c: char) -> Option<Name> {
                 data: Name_::CJK(CJK {
                     emit_prefix: true,
                     idx: data_start,
-                    data: data
-                })
+                    data: data,
+                }),
             })
         } else {
             // maybe it is a hangul syllable?
-            jamo::syllable_decomposition(c).map(|(ch, ju, jo)| {
-                Name {
-                    data: Name_::Hangul(Hangul {
-                        emit_prefix: true,
-                        idx: 0,
-                        data: [ch, ju, jo]
-                    })
-                }
+            jamo::syllable_decomposition(c).map(|(ch, ju, jo)| Name {
+                data: Name_::Hangul(Hangul {
+                    emit_prefix: true,
+                    idx: 0,
+                    data: [ch, ju, jo],
+                }),
             })
         }
     } else {
         Some(Name {
-            data:  Name_::Plain(iter_str::IterStr::new(offset as usize))
+            data: Name_::Plain(iter_str::IterStr::new(offset as usize)),
         })
     }
 }
 
-fn fnv_hash<I: Iterator<Item=u8>>(x: I) -> u64 {
+fn fnv_hash<I: Iterator<Item = u8>>(x: I) -> u64 {
     let mut g = 0xcbf29ce484222325 ^ phf::NAME2CODE_N;
-    for b in x { g ^= b as u64; g = g.wrapping_mul(0x100000001b3); }
+    for b in x {
+        g ^= b as u64;
+        g = g.wrapping_mul(0x100000001b3);
+    }
     g
 }
 fn displace(f1: u32, f2: u32, d1: u32, d2: u32) -> u32 {
@@ -292,9 +309,11 @@ fn displace(f1: u32, f2: u32, d1: u32, d2: u32) -> u32 {
 fn split(hash: u64) -> (u32, u32, u32) {
     let bits = 21;
     let mask = (1 << bits) - 1;
-    ((hash & mask) as u32,
-     ((hash >> bits) & mask) as u32,
-     ((hash >> (2 * bits)) & mask) as u32)
+    (
+        (hash & mask) as u32,
+        ((hash >> bits) & mask) as u32,
+        ((hash >> (2 * bits)) & mask) as u32,
+    )
 }
 
 /// Find the character called `name`, or `None` if no such character
@@ -347,7 +366,9 @@ pub fn character(name: &str) -> Option<char> {
     // try `CJK UNIFIED IDEOGRAPH-<digits>`
     if search_name.starts_with(CJK_UNIFIED_IDEOGRAPH_PREFIX.as_bytes()) {
         let remaining = &search_name[CJK_UNIFIED_IDEOGRAPH_PREFIX.len()..];
-        if remaining.len() > 5 { return None; } // avoid overflow
+        if remaining.len() > 5 {
+            return None;
+        } // avoid overflow
 
         let mut v = 0u32;
         for &c in remaining.iter() {
@@ -389,10 +410,12 @@ pub fn character(name: &str) -> Option<char> {
     // everything. (i.e. no need for probing)
     let maybe_name = match ::name(codepoint) {
         None => {
-            if true { debug_assert!(false) }
-            return None
+            if true {
+                debug_assert!(false)
+            }
+            return None;
         }
-        Some(name) => name
+        Some(name) => name,
     };
 
     // run through the parts of the name, matching them against the
@@ -402,7 +425,7 @@ pub fn character(name: &str) -> Option<char> {
         let part = part.as_bytes();
         let part_l = part.len();
         if passed_name.len() < part_l || &passed_name[..part_l] != part {
-            return None
+            return None;
         }
         passed_name = &passed_name[part_l..]
     }
@@ -413,54 +436,39 @@ pub fn character(name: &str) -> Option<char> {
 // FIXME: use the stdlib one if/when std::ascii moves into `core` (or
 // some such).
 static ASCII_UPPER_MAP: [u8; 256] = [
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-    0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
     b' ', b'!', b'"', b'#', b'$', b'%', b'&', b'\'', // " // syntax highlighting :/
-    b'(', b')', b'*', b'+', b',', b'-', b'.', b'/',
-    b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7',
-    b'8', b'9', b':', b';', b'<', b'=', b'>', b'?',
-    b'@', b'A', b'B', b'C', b'D', b'E', b'F', b'G',
-    b'H', b'I', b'J', b'K', b'L', b'M', b'N', b'O',
-    b'P', b'Q', b'R', b'S', b'T', b'U', b'V', b'W',
-    b'X', b'Y', b'Z', b'[', b'\\', b']', b'^', b'_',
-    b'`', b'A', b'B', b'C', b'D', b'E', b'F', b'G',
-    b'H', b'I', b'J', b'K', b'L', b'M', b'N', b'O',
-    b'P', b'Q', b'R', b'S', b'T', b'U', b'V', b'W',
-    b'X', b'Y', b'Z', b'{', b'|', b'}', b'~', 0x7f,
-    0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
-    0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f,
-    0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97,
-    0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0x9e, 0x9f,
-    0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7,
-    0xa8, 0xa9, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf,
-    0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7,
-    0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf,
-    0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7,
-    0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf,
-    0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7,
-    0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf,
-    0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7,
-    0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef,
-    0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7,
-    0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff,
+    b'(', b')', b'*', b'+', b',', b'-', b'.', b'/', b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7',
+    b'8', b'9', b':', b';', b'<', b'=', b'>', b'?', b'@', b'A', b'B', b'C', b'D', b'E', b'F', b'G',
+    b'H', b'I', b'J', b'K', b'L', b'M', b'N', b'O', b'P', b'Q', b'R', b'S', b'T', b'U', b'V', b'W',
+    b'X', b'Y', b'Z', b'[', b'\\', b']', b'^', b'_', b'`', b'A', b'B', b'C', b'D', b'E', b'F',
+    b'G', b'H', b'I', b'J', b'K', b'L', b'M', b'N', b'O', b'P', b'Q', b'R', b'S', b'T', b'U', b'V',
+    b'W', b'X', b'Y', b'Z', b'{', b'|', b'}', b'~', 0x7f, 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86,
+    0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f, 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96,
+    0x97, 0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0x9e, 0x9f, 0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6,
+    0xa7, 0xa8, 0xa9, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf, 0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6,
+    0xb7, 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf, 0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6,
+    0xc7, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf, 0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6,
+    0xd7, 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf, 0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6,
+    0xe7, 0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, 0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6,
+    0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff,
 ];
 
 #[cfg(test)]
 mod tests {
-    use std::prelude::v1::*;
-    use std::char;
     use rand::{
+        distributions::{Distribution, Standard},
         prelude::{SeedableRng, StdRng},
-        distributions::{Standard, Distribution},
     };
+    use std::char;
+    use std::prelude::v1::*;
 
+    use super::{character, generated, is_cjk_unified_ideograph, jamo, name};
     use test::{self, Bencher};
-    use super::{generated, name, character, is_cjk_unified_ideograph, jamo};
 
-    static DATA: &'static str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"),
-                                                     "/data/UnicodeData.txt"));
+    static DATA: &'static str =
+        include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/data/UnicodeData.txt"));
 
     #[test]
     fn exhaustive() {
@@ -470,9 +478,13 @@ mod tests {
             for c in (from..to).filter_map(char::from_u32) {
                 if !is_cjk_unified_ideograph(c) && !jamo::is_hangul_syllable(c) {
                     let n = name(c);
-                    assert!(n.is_none(),
-                            "{} ({}) shouldn't have a name but is called {}",
-                            c, c as u32, n.unwrap());
+                    assert!(
+                        n.is_none(),
+                        "{} ({}) shouldn't have a name but is called {}",
+                        c,
+                        c as u32,
+                        n.unwrap()
+                    );
                 }
             }
         }
@@ -482,14 +494,16 @@ mod tests {
             let mut it = line.split(';');
 
             let raw_c = it.next();
-            let c = match char::from_u32(raw_c.and_then(|s| u32::from_str_radix(s, 16).ok()).unwrap()) {
+            let c = match char::from_u32(
+                raw_c.and_then(|s| u32::from_str_radix(s, 16).ok()).unwrap(),
+            ) {
                 Some(c) => c,
-                None => continue
+                None => continue,
             };
 
             let n = it.next().unwrap();
             if n.starts_with("<") {
-                continue
+                continue;
             }
 
             let computed_n = name(c).unwrap();
@@ -501,7 +515,6 @@ mod tests {
             let number_of_parts = computed_n.count();
             assert_eq!(hint_low, number_of_parts);
             assert_eq!(hint_high, Some(number_of_parts));
-
 
             assert_eq!(character(n), Some(c));
             assert_eq!(character(&n.to_ascii_lowercase()), Some(c));
@@ -520,19 +533,12 @@ mod tests {
         assert_eq!(n.to_string(), "DOMINO TILE VERTICAL-00-00".to_string());
     }
 
-
     #[test]
     fn character_negative() {
         use MAX_NAME_LENGTH;
         let long_name = "x".repeat(100);
-        assert!(long_name.len() > MAX_NAME_LENGTH);  // Otherwise this test is pointless
-        let names = [
-            "",
-            "x",
-            "öäå",
-            "SPAACE",
-            &long_name,
-            ];
+        assert!(long_name.len() > MAX_NAME_LENGTH); // Otherwise this test is pointless
+        let names = ["", "x", "öäå", "SPAACE", &long_name];
         for &n in names.iter() {
             assert_eq!(character(n), None);
         }
@@ -540,12 +546,18 @@ mod tests {
 
     #[test]
     fn name_hangul_syllable() {
-        assert_eq!(name('\u{ac00}').map(|s| s.to_string()),
-                   Some("HANGUL SYLLABLE GA".to_string())); // first
-        assert_eq!(name('\u{bdc1}').map(|s| s.to_string()),
-                   Some("HANGUL SYLLABLE BWELG".to_string()));
-        assert_eq!(name('\u{d7a3}').map(|s| s.to_string()),
-                   Some("HANGUL SYLLABLE HIH".to_string())); // last
+        assert_eq!(
+            name('\u{ac00}').map(|s| s.to_string()),
+            Some("HANGUL SYLLABLE GA".to_string())
+        ); // first
+        assert_eq!(
+            name('\u{bdc1}').map(|s| s.to_string()),
+            Some("HANGUL SYLLABLE BWELG".to_string())
+        );
+        assert_eq!(
+            name('\u{d7a3}').map(|s| s.to_string()),
+            Some("HANGUL SYLLABLE HIH".to_string())
+        ); // last
     }
 
     #[test]
@@ -559,7 +571,7 @@ mod tests {
     #[test]
     fn cjk_unified_ideograph_exhaustive() {
         for &(lo, hi) in generated::CJK_IDEOGRAPH_RANGES.iter() {
-            for x in lo as u32 ..= hi as u32 {
+            for x in lo as u32..=hi as u32 {
                 let c = char::from_u32(x).unwrap();
 
                 let real_name = format!("CJK UNIFIED IDEOGRAPH-{:X}", x);
@@ -567,25 +579,36 @@ mod tests {
                 assert_eq!(character(&real_name), Some(c));
                 assert_eq!(character(&lower_real_name), Some(c));
 
-                assert_eq!(name(c).map(|s| s.to_string()),
-                           Some(real_name));
+                assert_eq!(name(c).map(|s| s.to_string()), Some(real_name));
             }
         }
     }
     #[test]
     fn name_cjk_unified_ideograph() {
-        assert_eq!(name('\u{4e00}').map(|s| s.to_string()),
-                   Some("CJK UNIFIED IDEOGRAPH-4E00".to_string())); // first in BMP
-        assert_eq!(name('\u{9fcc}').map(|s| s.to_string()),
-                   Some("CJK UNIFIED IDEOGRAPH-9FCC".to_string())); // last in BMP (as of 6.1)
-        assert_eq!(name('\u{20000}').map(|s| s.to_string()),
-                   Some("CJK UNIFIED IDEOGRAPH-20000".to_string())); // first in SIP
-        assert_eq!(name('\u{2a6d6}').map(|s| s.to_string()),
-                   Some("CJK UNIFIED IDEOGRAPH-2A6D6".to_string()));
-        assert_eq!(name('\u{2a700}').map(|s| s.to_string()),
-                   Some("CJK UNIFIED IDEOGRAPH-2A700".to_string()));
-        assert_eq!(name('\u{2b81d}').map(|s| s.to_string()),
-                   Some("CJK UNIFIED IDEOGRAPH-2B81D".to_string())); // last in SIP (as of 6.0)
+        assert_eq!(
+            name('\u{4e00}').map(|s| s.to_string()),
+            Some("CJK UNIFIED IDEOGRAPH-4E00".to_string())
+        ); // first in BMP
+        assert_eq!(
+            name('\u{9fcc}').map(|s| s.to_string()),
+            Some("CJK UNIFIED IDEOGRAPH-9FCC".to_string())
+        ); // last in BMP (as of 6.1)
+        assert_eq!(
+            name('\u{20000}').map(|s| s.to_string()),
+            Some("CJK UNIFIED IDEOGRAPH-20000".to_string())
+        ); // first in SIP
+        assert_eq!(
+            name('\u{2a6d6}').map(|s| s.to_string()),
+            Some("CJK UNIFIED IDEOGRAPH-2A6D6".to_string())
+        );
+        assert_eq!(
+            name('\u{2a700}').map(|s| s.to_string()),
+            Some("CJK UNIFIED IDEOGRAPH-2A700".to_string())
+        );
+        assert_eq!(
+            name('\u{2b81d}').map(|s| s.to_string()),
+            Some("CJK UNIFIED IDEOGRAPH-2B81D".to_string())
+        ); // last in SIP (as of 6.0)
     }
 
     #[test]
@@ -605,7 +628,6 @@ mod tests {
         assert_eq!(character("CJK UNIFIED IDEOGRAPH-2A6FF"), None);
     }
 
-
     #[bench]
     fn name_basic(b: &mut Bencher) {
         b.iter(|| {
@@ -624,13 +646,14 @@ mod tests {
     fn name_10000_invalid(b: &mut Bencher) {
         // be consistent across runs, but avoid sequential/caching.
         let mut rng = StdRng::seed_from_u64(0x12345678);
-        let chars: Vec<char> = Standard.sample_iter(&mut rng).take(10000)
-                                     .filter_map(|c| {
-                                         match c {
-                                             c if name(c).is_none() => Some(c),
-                                             _ => None
-                                         }
-                                     }).collect();
+        let chars: Vec<char> = Standard
+            .sample_iter(&mut rng)
+            .take(10000)
+            .filter_map(|c| match c {
+                c if name(c).is_none() => Some(c),
+                _ => None,
+            })
+            .collect();
 
         b.iter(|| {
             for &c in chars.iter() {
@@ -642,12 +665,11 @@ mod tests {
     #[bench]
     fn name_all_valid(b: &mut Bencher) {
         let chars = (0u32..0x10FFFF)
-            .filter_map(|x| {
-                match char::from_u32(x) {
-                    Some(c) if name(c).is_some() => Some(c),
-                    _ => None
-                }
-            }).collect::<Vec<char>>();
+            .filter_map(|x| match char::from_u32(x) {
+                Some(c) if name(c).is_some() => Some(c),
+                _ => None,
+            })
+            .collect::<Vec<char>>();
 
         b.iter(|| {
             for c in chars.iter() {
@@ -663,7 +685,10 @@ mod tests {
         // be consistent across runs, but avoid sequential/caching.
         let mut rng = StdRng::seed_from_u64(0x12345678);
 
-        let names: Vec<_> = Standard.sample_iter(&mut rng).take(10000).filter_map(name)
+        let names: Vec<_> = Standard
+            .sample_iter(&mut rng)
+            .take(10000)
+            .filter_map(name)
             .map(|name| name.to_string())
             .collect();
 

@@ -4,16 +4,18 @@
 use core::prelude::*;
 
 // derived from Jamo.txt
-pub static CHOSEONG: &'static [&'static str] =
-    &["G", "GG", "N", "D", "DD", "R", "M", "B", "BB", "S",
-      "SS", "", "J", "JJ", "C", "K", "T", "P", "H"];
-pub static JUNGSEONG: &'static [&'static str] =
-    &["A", "AE", "YA", "YAE", "EO", "E", "YEO", "YE", "O", "WA",
-      "WAE", "OE", "YO", "U", "WEO", "WE", "WI", "YU", "EU", "YI", "I"];
-pub static JONGSEONG: &'static [&'static str] =
-    &["", "G", "GG", "GS", "N", "NJ", "NH", "D", "L", "LG",
-      "LM", "LB", "LS", "LT", "LP", "LH", "M", "B", "BS", "S",
-      "SS", "NG", "J", "C", "K", "T", "P", "H"];
+pub static CHOSEONG: &'static [&'static str] = &[
+    "G", "GG", "N", "D", "DD", "R", "M", "B", "BB", "S", "SS", "", "J", "JJ", "C", "K", "T", "P",
+    "H",
+];
+pub static JUNGSEONG: &'static [&'static str] = &[
+    "A", "AE", "YA", "YAE", "EO", "E", "YEO", "YE", "O", "WA", "WAE", "OE", "YO", "U", "WEO", "WE",
+    "WI", "YU", "EU", "YI", "I",
+];
+pub static JONGSEONG: &'static [&'static str] = &[
+    "", "G", "GG", "GS", "N", "NJ", "NH", "D", "L", "LG", "LM", "LB", "LS", "LT", "LP", "LH", "M",
+    "B", "BS", "S", "SS", "NG", "J", "C", "K", "T", "P", "H",
+];
 
 pub fn is_hangul_syllable(c: char) -> bool {
     '\u{AC00}' <= c && c <= '\u{D7A3}'
@@ -22,7 +24,7 @@ pub fn is_hangul_syllable(c: char) -> bool {
 pub fn syllable_decomposition(c: char) -> Option<(u8, u8, u8)> {
     if !is_hangul_syllable(c) {
         // outside the range
-        return None
+        return None;
     }
     let n = c as u32 - 0xAC00;
     // break this into the various parts.
@@ -30,9 +32,7 @@ pub fn syllable_decomposition(c: char) -> Option<(u8, u8, u8)> {
     let jungseong = (n / 28) % 21;
     let choseong = n / (28 * 21);
 
-    Some((choseong as u8,
-          jungseong as u8,
-          jongseong as u8))
+    Some((choseong as u8, jungseong as u8, jongseong as u8))
 }
 
 fn slice_shift_byte<'a>(a: &'a [u8]) -> (Option<u8>, &'a [u8]) {
@@ -174,16 +174,20 @@ mod tests {
     #[test]
     fn correct_slice_shift_choseong() {
         for (i, &choseong) in super::CHOSEONG.iter().enumerate() {
-            assert_eq!(super::slice_shift_choseong(choseong.as_bytes()),
-                       (Some(i as u32), b"" as &[u8]));
+            assert_eq!(
+                super::slice_shift_choseong(choseong.as_bytes()),
+                (Some(i as u32), b"" as &[u8])
+            );
         }
     }
 
     #[test]
     fn correct_slice_shift_jungseong() {
         for (i, &jungseong) in super::JUNGSEONG.iter().enumerate() {
-            assert_eq!(super::slice_shift_jungseong(jungseong.as_bytes()),
-                       (Some(i as u32), b"" as &[u8]));
+            assert_eq!(
+                super::slice_shift_jungseong(jungseong.as_bytes()),
+                (Some(i as u32), b"" as &[u8])
+            );
         }
 
         // there is no empty jungseong
@@ -193,8 +197,10 @@ mod tests {
     #[test]
     fn correct_slice_shift_jongseong() {
         for (i, &jongseong) in super::JONGSEONG.iter().enumerate() {
-            assert_eq!(super::slice_shift_jongseong(jongseong.as_bytes()),
-                       (Some(i as u32), b"" as &[u8]));
+            assert_eq!(
+                super::slice_shift_jongseong(jongseong.as_bytes()),
+                (Some(i as u32), b"" as &[u8])
+            );
         }
     }
 }
