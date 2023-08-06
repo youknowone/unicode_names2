@@ -15,7 +15,6 @@ macro_rules! w {
 }
 
 mod formatting;
-mod phf;
 mod trie;
 mod util;
 
@@ -374,16 +373,19 @@ fn get_truncated_table_data(
     (codepoint_names, cjk)
 }
 
-pub fn generate_phf(path: Option<&Path>, truncate: Option<usize>, lambda: usize, tries: usize) {
+pub fn generate_phf(path: Option<&Path>, truncate: Option<usize>) {
     let (codepoint_names, _) = get_truncated_table_data(truncate);
 
     let mut ctxt = make_context(path);
-    let (n, disps, data) = phf::create_phf(&codepoint_names, lambda, tries);
-
-    w!(ctxt, "pub static NAME2CODE_N: u64 = {};\n", n);
-    ctxt.write_debugs("NAME2CODE_DISP", "(u16, u16)", &disps);
-
-    ctxt.write_debugs("NAME2CODE_CODE", "char", &data);
+    let mut builder = phf_codegen::Map::new();
+    for &(character, name) in &codepoint_names {
+        builder.entry(name.as_bytes(), &format!("{:?}", character));
+    }
+    write!(
+        &mut ctxt.out,
+        "pub static NAMES: phf::Map<&'static [u8], char> = {};",
+        builder.build()
+    ).unwrap();
 
     if let Some(path) = path {
         fs::rename(path.with_extension("tmp"), path).unwrap()

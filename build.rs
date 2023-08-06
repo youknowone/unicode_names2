@@ -11,6 +11,6 @@ fn main() {
     {
         let mut generated_phf_path = out_dir;
         generated_phf_path.push("generated_phf.rs");
-        generator::generate_phf(Some(&generated_phf_path), None, 3, 2);
+        generator::generate_phf(Some(&generated_phf_path), None);
     }
 }

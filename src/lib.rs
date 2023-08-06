@@ -70,7 +70,6 @@ use core::{char, fmt};
 use generated::{
     MAX_NAME_LENGTH, PHRASEBOOK_OFFSETS1, PHRASEBOOK_OFFSETS2, PHRASEBOOK_OFFSET_SHIFT,
 };
-use generated_phf as phf;
 
 #[allow(dead_code)]
 #[rustfmt::skip]
@@ -287,27 +286,6 @@ pub fn name(c: char) -> Option<Name> {
     }
 }
 
-fn fnv_hash<I: Iterator<Item = u8>>(x: I) -> u64 {
-    let mut g = 0xcbf29ce484222325 ^ phf::NAME2CODE_N;
-    for b in x {
-        g ^= b as u64;
-        g = g.wrapping_mul(0x100000001b3);
-    }
-    g
-}
-fn displace(f1: u32, f2: u32, d1: u32, d2: u32) -> u32 {
-    d2.wrapping_add(f1.wrapping_mul(d1)).wrapping_add(f2)
-}
-fn split(hash: u64) -> (u32, u32, u32) {
-    let bits = 21;
-    let mask = (1 << bits) - 1;
-    (
-        (hash & mask) as u32,
-        ((hash >> bits) & mask) as u32,
-        ((hash >> (2 * bits)) & mask) as u32,
-    )
-}
-
 /// Find the character called `name`, or `None` if no such character
 /// exists.
 ///
@@ -382,15 +360,7 @@ pub fn character(search_name: &str) -> Option<char> {
         }
     }
 
-    // get the parts of the hash...
-    let (g, f1, f2) = split(fnv_hash(search_name.iter().copied()));
-    // ...and the appropriate displacements...
-    let (d1, d2) = phf::NAME2CODE_DISP[g as usize % phf::NAME2CODE_DISP.len()];
-
-    // ...to find the right index...
-    let idx = displace(f1, f2, d1 as u32, d2 as u32) as usize;
-    // ...for looking up the codepoint.
-    let codepoint = phf::NAME2CODE_CODE[idx % phf::NAME2CODE_CODE.len()];
+    let codepoint = *generated_phf::NAMES.get(search_name)?;
 
     // Now check that this is actually correct. Since this is a
     // perfect hash table, valid names map precisely to their code

@@ -13,3 +13,5 @@ time = "0.1.10"
 log = "0"
 getopts = "0.2.21"
 rand = "0.8.5"
+phf = { version = "0.11.1", default-features = false }
+phf_codegen = "0.11.1"
