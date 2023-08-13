@@ -3,13 +3,15 @@
 name = "unicode_names2_macros"
 edition = "2018"
 version = "0.6.0"
-authors = ["Huon Wilson <dbau.pp@gmail.com>",
-           "Valentin Lorentz <progval+git@progval.net>"]
+authors = [
+    "Huon Wilson <dbau.pp@gmail.com>",
+    "Valentin Lorentz <progval+git@progval.net>"
+]
 
-homepage = "https://github.com/ProgVal/unicode_names2"
-repository = "https://github.com/ProgVal/unicode_names2"
+homepage = "https://github.com/progval/unicode_names2"
+repository = "https://github.com/progval/unicode_names2"
 documentation = "https://docs.rs/unicode_names2/"
-license = "MIT/Apache-2.0"
+license = "MIT or Apache-2.0"
 keywords = ["text", "unicode", "macro"]
 description = "Support macros for `unicode_names2`."
 
