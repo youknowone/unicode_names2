@@ -3,7 +3,7 @@
 name = "unicode_names2"
 edition = "2018"
 rust-version = "1.63.0"
-version = "0.6.0"
+version = "1.0.0"
 authors = [
     "Huon Wilson <dbau.pp@gmail.com>",
     "Kang Seonghoon <public+rust@mearie.org>",
@@ -25,10 +25,6 @@ but still offering O(1)* look-up in both directions. (*more precisely,
 O(length of name).)
 """
 
-exclude = [
-        "data/*",
-]
-
 [workspace]
 members = [".", "generator"]
 
@@ -40,11 +36,11 @@ no_std = []
 
 [dev-dependencies.unicode_names2_macros]
 path = "unicode_names2_macros"
-version = ">=0.3, <0.7"
+version = ">=0.3, <2.0"
 
 [dev-dependencies]
 rand = "0.8.5"
 rand_xorshift = "0.3.0"
 
 [build-dependencies]
-unicode_names2_generator = { path = "generator" }
+unicode_names2_generator = { version = "1.0.0", path = "generator" }
