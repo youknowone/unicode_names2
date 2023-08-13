@@ -19,8 +19,6 @@ mod phf;
 mod trie;
 mod util;
 
-const UNICODE_DATA: &str = include_str!("../../data/UnicodeData.txt");
-
 const SPLITTERS: &[u8] = b"-";
 
 struct TableData {
@@ -28,7 +26,7 @@ struct TableData {
     cjk_ideograph_ranges: Vec<(char, char)>,
 }
 
-fn get_table_data() -> TableData {
+fn get_table_data(unicode_data: &'static str) -> TableData {
     fn extract(line: &'static str) -> Option<(char, &'static str)> {
         let splits: Vec<_> = line.splitn(15, ';').collect();
         assert_eq!(splits.len(), 15);
@@ -41,7 +39,7 @@ fn get_table_data() -> TableData {
         Some((c, name))
     }
 
-    let mut iter = UNICODE_DATA.split('\n');
+    let mut iter = unicode_data.split('\n');
 
     let mut codepoint_names = vec![];
     let mut cjk_ideograph_ranges = vec![];
@@ -362,20 +360,20 @@ fn make_context(path: Option<&Path>) -> Context {
 
 #[allow(clippy::type_complexity)]
 fn get_truncated_table_data(
-    truncate: Option<usize>,
+    unicode_data: &'static str, truncate: Option<usize>,
 ) -> (Vec<(char, &'static str)>, Vec<(char, char)>) {
     let TableData {
         mut codepoint_names,
         cjk_ideograph_ranges: cjk,
-    } = get_table_data();
+    } = get_table_data(unicode_data);
     if let Some(n) = truncate {
         codepoint_names.truncate(n)
     }
     (codepoint_names, cjk)
 }
 
-pub fn generate_phf(path: Option<&Path>, truncate: Option<usize>, lambda: usize, tries: usize) {
-    let (codepoint_names, _) = get_truncated_table_data(truncate);
+pub fn generate_phf(unicode_data: &'static str, path: Option<&Path>, truncate: Option<usize>, lambda: usize, tries: usize) {
+    let (codepoint_names, _) = get_truncated_table_data(unicode_data, truncate);
 
     let mut ctxt = make_context(path);
     let (n, disps, data) = phf::create_phf(&codepoint_names, lambda, tries);
@@ -390,8 +388,8 @@ pub fn generate_phf(path: Option<&Path>, truncate: Option<usize>, lambda: usize,
     }
 }
 
-pub fn generate(path: Option<&Path>, truncate: Option<usize>) {
-    let (codepoint_names, cjk) = get_truncated_table_data(truncate);
+pub fn generate(unicode_data: &'static str, path: Option<&Path>, truncate: Option<usize>) {
+    let (codepoint_names, cjk) = get_truncated_table_data(unicode_data, truncate);
     let mut ctxt = make_context(path);
 
     write_cjk_ideograph_ranges(&mut ctxt, &cjk);
