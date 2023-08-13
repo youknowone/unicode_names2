@@ -360,7 +360,8 @@ fn make_context(path: Option<&Path>) -> Context {
 
 #[allow(clippy::type_complexity)]
 fn get_truncated_table_data(
-    unicode_data: &'static str, truncate: Option<usize>,
+    unicode_data: &'static str,
+    truncate: Option<usize>,
 ) -> (Vec<(char, &'static str)>, Vec<(char, char)>) {
     let TableData {
         mut codepoint_names,
@@ -372,7 +373,13 @@ fn get_truncated_table_data(
     (codepoint_names, cjk)
 }
 
-pub fn generate_phf(unicode_data: &'static str, path: Option<&Path>, truncate: Option<usize>, lambda: usize, tries: usize) {
+pub fn generate_phf(
+    unicode_data: &'static str,
+    path: Option<&Path>,
+    truncate: Option<usize>,
+    lambda: usize,
+    tries: usize,
+) {
     let (codepoint_names, _) = get_truncated_table_data(unicode_data, truncate);
 
     let mut ctxt = make_context(path);
