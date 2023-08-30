@@ -372,11 +372,7 @@ fn get_truncated_table_data(
     (codepoint_names, cjk)
 }
 
-pub fn generate_phf(
-    unicode_data: &'static str,
-    path: Option<&Path>,
-    truncate: Option<usize>,
-) {
+pub fn generate_phf(unicode_data: &'static str, path: Option<&Path>, truncate: Option<usize>) {
     let (codepoint_names, _) = get_truncated_table_data(unicode_data, truncate);
 
     let mut ctxt = make_context(path);
@@ -388,7 +384,8 @@ pub fn generate_phf(
         &mut ctxt.out,
         "pub static NAMES: phf::Map<&'static [u8], char> = {};",
         builder.build()
-    ).unwrap();
+    )
+    .unwrap();
 
     if let Some(path) = path {
         fs::rename(path.with_extension("tmp"), path).unwrap()
