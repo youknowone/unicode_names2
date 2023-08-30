@@ -2,13 +2,17 @@
 
 name = "unicode_names2"
 edition = "2018"
-version = "0.6.0"
-authors = ["Huon Wilson <dbau.pp@gmail.com>",
-           "Kang Seonghoon <public+rust@mearie.org>",
-           "Valentin Lorentz <progval+git@progval.net>",]
+rust-version = "1.63.0"
+version = "1.0.0"
+authors = [
+    "Huon Wilson <dbau.pp@gmail.com>",
+    "Kang Seonghoon <public+rust@mearie.org>",
+    "Valentin Lorentz <progval+git@progval.net>",
+    "Jeong YunWon <jeong@youknowone.org>",
+]
 
-homepage = "https://github.com/ProgVal/unicode_names2"
-repository = "https://github.com/ProgVal/unicode_names2"
+homepage = "https://github.com/progval/unicode_names2"
+repository = "https://github.com/progval/unicode_names2"
 documentation = "https://docs.rs/unicode_names2/"
 license = "MIT/Apache-2.0"
 keywords = ["text", "unicode"]
@@ -20,10 +24,6 @@ and space, with the full bidirectional tables weighing barely 500 KB
 but still offering O(1)* look-up in both directions. (*more precisely,
 O(length of name).)
 """
-
-exclude = [
-        "data/*",
-]
 
 [workspace]
 members = [".", "generator"]
@@ -39,11 +39,11 @@ phf = { version = "0.11", default-features = false }
 
 [dev-dependencies.unicode_names2_macros]
 path = "unicode_names2_macros"
-version = ">=0.3, <0.7"
+version = ">=0.3, <2.0"
 
 [dev-dependencies]
 rand = "0.8.5"
 rand_xorshift = "0.3.0"
 
 [build-dependencies]
-unicode_names2_generator = { path = "generator" }
+unicode_names2_generator = { version = "1.0.0", path = "generator" }
