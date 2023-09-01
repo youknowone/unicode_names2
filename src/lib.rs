@@ -376,8 +376,9 @@ pub fn character(search_name: &str) -> Option<char> {
         }
     }
 
-    let Some(&codepoint) = generated_phf::NAMES.get(search_name) else {
-        return character_by_alias(search_name);
+    let codepoint = match generated_phf::NAMES.get(search_name) {
+        Some(&codepoint) => codepoint,
+        None => return character_by_alias(search_name),
     };
 
     // Now check that this is actually correct. Since this is a
