@@ -89,7 +89,7 @@ mod jamo;
 /// A map of unicode aliases to their corresponding values.
 /// Generated in generator
 #[allow(dead_code)]
-static ALIASES: phf::Map<&'static [u8], char> = include!("generated_alias.rs");
+static ALIASES: phf::Map<&'static [u8], char> = include!(concat!(env!("OUT_DIR"), "/generated_alias.rs"));
 
 mod iter_str;
 
